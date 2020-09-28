@@ -2,10 +2,13 @@ package no.kristiania;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 public class httpClient {
 
     private int statusCode = 200;
+    private final Map<String, String> headers;
 
     public httpClient(String requestTarget, String hostName, int port) throws IOException {
 
@@ -16,16 +19,31 @@ public class httpClient {
 
         socket.getOutputStream().write(request.getBytes());
 
-        StringBuilder line = new StringBuilder();
+        String line = readLine(socket);
+        System.out.println(line);
+        String[] parts = line.toString().split(" ");
+        statusCode = Integer.parseInt((parts[1]));
 
+        headers = new HashMap<>();
+        String headerLine;
+        while(!(headerLine = readLine(socket)).isEmpty()){
+            int colonPos = headerLine.indexOf(':');
+            String headerName = headerLine.substring(0, colonPos);
+            String headerValue = headerLine.substring(colonPos+1);
+
+            headers.put(headerName, headerValue);
+        }
+    }
+
+
+     private String readLine(Socket socket) throws IOException {
+        StringBuilder line = new StringBuilder();
         int c;
         while ((c = socket.getInputStream().read()) != -1) {
             if (c == '\n') break;
             line.append((char) c);
         }
-        System.out.println(line);
-        String[] parts = line.toString().split(" ");
-        statusCode = Integer.parseInt((parts[1]));
+        return line.toString();
     }
 
     public static void main(String[] args) throws IOException {
@@ -38,6 +56,6 @@ public class httpClient {
     }
 
     public String getResponseHeader(String headerName) {
-        return null;
+        return headers.get(headerName);
     }
 }
