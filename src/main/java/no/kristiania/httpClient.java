@@ -8,7 +8,8 @@ import java.util.Map;
 public class httpClient {
 
     private int statusCode = 200;
-    private final Map<String, String> headers;
+    private final Map<String, String> headers = new HashMap<>();
+
 
     public httpClient(String requestTarget, String hostName, int port) throws IOException {
 
@@ -24,24 +25,27 @@ public class httpClient {
         String[] parts = line.toString().split(" ");
         statusCode = Integer.parseInt((parts[1]));
 
-        headers = new HashMap<>();
         String headerLine;
         while(!(headerLine = readLine(socket)).isEmpty()){
             int colonPos = headerLine.indexOf(':');
             String headerName = headerLine.substring(0, colonPos);
-            String headerValue = headerLine.substring(colonPos+1);
+            String headerValue = headerLine.substring(colonPos+1).trim();
 
             headers.put(headerName, headerValue);
         }
     }
 
-
      private String readLine(Socket socket) throws IOException {
         StringBuilder line = new StringBuilder();
         int c;
         while ((c = socket.getInputStream().read()) != -1) {
-            if (c == '\n') break;
+            if (c == '\r') {
+                socket.getInputStream().read();
+                break;
+            }
+
             line.append((char) c);
+
         }
         return line.toString();
     }
