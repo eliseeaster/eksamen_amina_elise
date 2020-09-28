@@ -5,7 +5,7 @@ import java.net.Socket;
 
 public class httpClient {
 
-    private int statusCode;
+    private int statusCode = 200;
 
     public httpClient(String requestTarget, String hostName, int port) throws IOException {
 
@@ -16,10 +16,16 @@ public class httpClient {
 
         socket.getOutputStream().write(request.getBytes());
 
+        StringBuilder line = new StringBuilder();
+
         int c;
         while ((c = socket.getInputStream().read()) != -1) {
-            System.out.print((char) c);
+            if (c == '\n') break;
+            line.append((char) c);
         }
+        System.out.println(line);
+        String[] parts = line.toString().split(" ");
+        statusCode = Integer.parseInt((parts[1]));
     }
 
     public static void main(String[] args) throws IOException {
@@ -29,5 +35,9 @@ public class httpClient {
 
     public int getStatusCode() {
         return statusCode;
+    }
+
+    public String getResponseHeader(String headerName) {
+        return null;
     }
 }
