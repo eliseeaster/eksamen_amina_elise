@@ -34,6 +34,7 @@ public class httpClient {
 
             headers.put(headerName, headerValue);
         }
+
         int contentLength = Integer.parseInt(getResponseHeader("Content-Length"));
         StringBuilder body = new StringBuilder();
         for (int i = 0; i < contentLength; i++){
