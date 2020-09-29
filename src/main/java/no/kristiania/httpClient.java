@@ -9,6 +9,7 @@ public class httpClient {
 
     private int statusCode = 200;
     private final Map<String, String> headers = new HashMap<>();
+    private String responseBody;
 
 
     public httpClient(String requestTarget, String hostName, int port) throws IOException {
@@ -33,6 +34,13 @@ public class httpClient {
 
             headers.put(headerName, headerValue);
         }
+        int contentLength = Integer.parseInt(getResponseHeader("Content-Length"));
+        StringBuilder body = new StringBuilder();
+        for (int i = 0; i < contentLength; i++){
+            body.append((char)socket.getInputStream().read());
+    }
+        this.responseBody = body.toString();
+
     }
 
      private String readLine(Socket socket) throws IOException {
@@ -61,5 +69,10 @@ public class httpClient {
 
     public String getResponseHeader(String headerName) {
         return headers.get(headerName);
+    }
+
+    public String getResponseBody() {
+        return responseBody;
+
     }
 }
