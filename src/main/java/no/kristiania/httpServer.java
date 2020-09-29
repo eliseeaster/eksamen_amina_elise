@@ -10,14 +10,18 @@ public class httpServer {
         ServerSocket serverSocket = new ServerSocket(port);
 
 
+
         new Thread(() -> {
             try{
                 Socket socket = serverSocket.accept();
                 handleRequest(socket);
-            } catch (IOException e){
+            }catch (IOException e){
                 e.printStackTrace();
             }
         }).start();
+
+
+
     }
 
     public static void main(String[] args) throws IOException {
@@ -26,8 +30,8 @@ public class httpServer {
     }
 
     private static void handleRequest(Socket socket) throws IOException {
-        String responseLine = httpClient.readLine(socket);
-        System.out.println(responseLine);
+        /* String responseLine = httpClient.readLine(socket);
+        System.out.println(responseLine); */
         String response = "HTTP/1.1 200 OK\r\n" +
                 "Content-Type: text/html; charset=utf-8\r\n" +
                 "Content-Length: 11\r\n" +
