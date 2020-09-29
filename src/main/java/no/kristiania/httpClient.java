@@ -7,14 +7,14 @@ import java.util.Map;
 
 public class httpClient {
 
-    private int statusCode = 200;
+    private int statusCode;
     private final Map<String, String> headers = new HashMap<>();
     private String responseBody;
 
 
     public httpClient(String requestTarget, String hostName, int port) throws IOException {
 
-        Socket socket = new Socket("urlecho.appspot.com", 80);
+        Socket socket = new Socket(hostName, port);
 
         String request = "GET " + requestTarget + " HTTP/1.1\r\n" +
                 "Host:" + hostName + "\r\n\r\n";
