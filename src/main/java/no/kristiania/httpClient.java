@@ -21,10 +21,9 @@ public class httpClient {
 
         socket.getOutputStream().write(request.getBytes());
 
-        String line = readLine(socket);
-        System.out.println(line);
-        String[] parts = line.toString().split(" ");
-        statusCode = Integer.parseInt((parts[1]));
+        String responseline = readLine(socket);
+        String[] parts = responseline.split(" ");
+        statusCode = Integer.parseInt(parts[1]);
 
         String headerLine;
         while(!(headerLine = readLine(socket)).isEmpty()){
@@ -44,7 +43,7 @@ public class httpClient {
 
     }
 
-     public static String readLine(Socket socket) throws IOException {
+     private String readLine(Socket socket) throws IOException {
         StringBuilder line = new StringBuilder();
         int c;
         while ((c = socket.getInputStream().read()) != -1) {
