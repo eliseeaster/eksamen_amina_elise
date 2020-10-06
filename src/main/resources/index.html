@@ -12,14 +12,15 @@
 
 <div>
     <a href="newWorker.html">Add new project member</a>
+    <div id="workers">Current workers:</div>
 </div>
 </body>
 <script>
-    fetch("/projectMembers")
+    fetch("/api/workers")
         .then(function(response) {
             return response.text();
         }).then(function(text) {
-        document.getElementById("projectMembers").innerHTML = text;
+        document.getElementById("workers").innerHTML = text;
     });
 </script>
 </html>
