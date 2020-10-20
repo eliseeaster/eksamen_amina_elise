@@ -1,19 +1,26 @@
 package no.kristiania;
 
+import no.kristiania.database.EmployeeDao;
+import org.postgresql.ds.PGSimpleDataSource;
+
+import javax.sql.DataSource;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class HttpServer {
 
     private File contentRoot;
-    private List<String> workerNames = new ArrayList<>();
+    private EmployeeDao employeeDao;
 
-    public HttpServer(int port) throws IOException {
+    public HttpServer(int port, DataSource dataSource) throws IOException {
+
+        employeeDao = new EmployeeDao(dataSource);
         ServerSocket serverSocket = new ServerSocket(port);
 
         new Thread(() -> {
@@ -21,14 +28,14 @@ public class HttpServer {
                 try {
                     Socket clientSocket = serverSocket.accept();
                     handleRequest(clientSocket);
-                } catch (IOException e) {
+                } catch (IOException | SQLException e) {
                     e.printStackTrace();
                 }
             }
         }).start();
     }
 
-    private void handleRequest(Socket clientSocket) throws IOException {
+    private void handleRequest(Socket clientSocket) throws IOException, SQLException {
         HttpMessage request = new HttpMessage(clientSocket);
         String requestLine = request.getStartLine();
         System.out.println("REQUEST" + requestLine);
@@ -45,7 +52,7 @@ public class HttpServer {
         if(requestMethod.equals("POST")){
             QueryString requestParameter = new QueryString(request.getBody());
 
-            workerNames.add(requestParameter.getParameter("full_name"));
+            employeeDao.insert(requestParameter.getParameter("full_name"));
             String body = "Okay";
             String response = "HTTP/1.1 200 OK\r\n" +
                     "Content-Length: " + body.length() + "\r\n" +
@@ -95,9 +102,9 @@ public class HttpServer {
 
     }
 
-    private void handleGetWorkers(Socket clientSocket) throws IOException {
+    private void handleGetWorkers(Socket clientSocket) throws IOException, SQLException {
         String body = "<ul>";
-        for (String workerName : workerNames) {
+        for (String workerName : employeeDao.list()) {
             body += "<li>" + workerName + "</li>";
         }
         body += "</ul>";
@@ -138,7 +145,13 @@ public class HttpServer {
 
 
     public static void main (String[]args) throws IOException {
-            HttpServer server = new HttpServer(8080);
+
+        PGSimpleDataSource dataSource = new PGSimpleDataSource();
+        dataSource.setUrl("jdbc:postgresql://localhost:5432/kristianiasemployees");
+        dataSource.setUser("kristianiasemployeesuser");
+        dataSource.setPassword("hemmelig");
+
+            HttpServer server = new HttpServer(8080, dataSource);
             server.setContentRoot(new File("src/main/resources"));
         }
 
@@ -146,8 +159,8 @@ public class HttpServer {
         this.contentRoot = contentRoot;
     }
 
-    List<String> getWorkerNames() {
-        return workerNames;
+    public List<String> getWorkerNames() throws SQLException {
+        return employeeDao.list();
     }
 }
 

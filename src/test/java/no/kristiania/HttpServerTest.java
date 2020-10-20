@@ -1,48 +1,64 @@
 package no.kristiania;
 
+import no.kristiania.database.EmployeeDao;
+import org.flywaydb.core.Flyway;
+import org.h2.jdbcx.JdbcDataSource;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class HttpServerTest {
 
+    private JdbcDataSource dataSource;
+
+    @BeforeEach
+    void setUp(){
+        dataSource = new JdbcDataSource();
+        dataSource.setURL("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1");
+
+        Flyway.configure().dataSource(dataSource).load().migrate();
+    }
+
     @Test
     void shouldReturnSuccessfulErrorCode() throws IOException {
-        new HttpServer(10001);
+        new HttpServer(10001, dataSource);
         HttpClient client = new HttpClient("/echo", "localhost", 10001);
         assertEquals(200, client.getStatusCode());
     }
 
     @Test
     void shouldReturnUnsuccessfulErrorCode() throws IOException {
-        new HttpServer(10002);
+        new HttpServer(10002, dataSource);
         HttpClient client = new HttpClient("/echo?status=404", "localhost", 10002);
         assertEquals(404, client.getStatusCode());
     }
 
     @Test
     void shouldReturnContentLength() throws IOException {
-        new HttpServer(10003);
+        new HttpServer(10003, dataSource);
         HttpClient client = new HttpClient("/echo?body=HelloWorld", "localhost", 10003);
         assertEquals("10", client.getResponseHeader("Content-Length"));
     }
 
     @Test
     void shouldReturnResponseBody() throws IOException {
-        new HttpServer(10004);
+        new HttpServer(10004, dataSource);
         HttpClient client = new HttpClient("/echo?body=HelloWorld", "localhost", 10004);
         assertEquals("HelloWorld", client.getResponseBody());
     }
 
     @Test
     void shouldReturnFileFromDesk() throws IOException {
-        HttpServer server = new HttpServer(10005);
+        HttpServer server = new HttpServer(10005, dataSource);
         File contentRoot = new File("target/");
         server.setContentRoot(contentRoot);
 
@@ -56,7 +72,7 @@ public class HttpServerTest {
 
     @Test
     void shouldReturnCorrectContentType() throws IOException {
-        HttpServer server = new HttpServer(10006);
+        HttpServer server = new HttpServer(10006, dataSource);
         File contentRoot = new File("target/");
         server.setContentRoot(contentRoot);
 
@@ -68,7 +84,7 @@ public class HttpServerTest {
 
     @Test
     void shouldReturn404IfFileNotFound() throws IOException {
-        HttpServer server = new HttpServer(10007);
+        HttpServer server = new HttpServer(10007, dataSource);
         File contentRoot = new File("target/");
         server.setContentRoot(contentRoot);
 
@@ -77,20 +93,19 @@ public class HttpServerTest {
     }
 
     @Test
-    void shouldPostNewWorker() throws IOException {
-        HttpServer server = new HttpServer(10008);
+    void shouldPostNewWorker() throws IOException, SQLException {
+        HttpServer server = new HttpServer(10008, dataSource);
         HttpClient client = new HttpClient("/api/newWorker", "localhost", 10008, "POST", "full_name=amina&email_address=amina@gmail");
         assertEquals(200, client.getStatusCode());
-        assertEquals(List.of("amina"), server.getWorkerNames());
+        assertThat(server.getWorkerNames()).contains("amina");
     }
 
     @Test
-    void shouldReturnExistingWorker() throws IOException {
-        HttpServer server = new HttpServer(10009);
-        server.getWorkerNames().add("elise");
+    void shouldReturnExistingWorker() throws IOException, SQLException {
+        HttpServer server = new HttpServer(10009, dataSource);
+        EmployeeDao employeeDao = new EmployeeDao(dataSource);
+        employeeDao.insert("elise");
         HttpClient client = new HttpClient("/api/workers", "localhost", 10009);
-        assertEquals("<ul><li>elise</li></ul>", client.getResponseBody());
-
-        
+        assertThat(client.getResponseBody()).contains("<li>elise</li>");
     }
 }
