@@ -3,32 +3,51 @@ package no.kristiania.database;
 import org.postgresql.ds.PGSimpleDataSource;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 public class EmployeeDao {
 
+    private final DataSource dataSource;
 
-    private final ArrayList<String> employees = new ArrayList<>();
-    private DataSource dataSource;
+    public EmployeeDao(DataSource dataSource) { this.dataSource = dataSource; }
 
-    public EmployeeDao(DataSource dataSource) {
-        this.dataSource = dataSource;
-    }
-
-    public void insert(String employee) throws SQLException {
+    public void insert(Employee employee) throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
-            try (PreparedStatement statement = connection.prepareStatement("INSERT INTO employees (employee_name) values (?)")) {
-                statement.setString(1, employee);
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "INSERT INTO employees (employee_name) values (?)",
+                    Statement.RETURN_GENERATED_KEYS
+                    )) {
+                statement.setString(1, employee.getName());
                 statement.executeUpdate();
+
+                try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                    generatedKeys.next();
+                    employee.setId(generatedKeys.getLong("id"));
+                }
             }
         }
-        employees.add(employee);
+    }
+
+    public Employee retrieve(Long id) throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM employees WHERE Id = ?")) {
+                statement.setLong(1, id);
+                try (ResultSet rs = statement.executeQuery()) {
+                    List<String> employees = new ArrayList<>();
+                    if (rs.next()) {
+                        Employee employee = new Employee();
+                        employee.setId(rs.getLong("id"));
+                        employee.setName(rs.getString("employee_name"));
+                        return employee;
+                    } else {
+                        return null;
+                    }
+                }
+            }
+        }
     }
 
     public List<String> list() throws SQLException {
@@ -56,9 +75,10 @@ public class EmployeeDao {
 
         System.out.println("What's the name of the employee?");
         Scanner scanner = new Scanner(System.in);
-        String employeeName = scanner.nextLine();
+        Employee employee = new Employee();
+        employee.setName(scanner.nextLine());
 
-        employeeDao.insert(employeeName);
+        employeeDao.insert(employee);
         System.out.println(employeeDao.list());
 
     }

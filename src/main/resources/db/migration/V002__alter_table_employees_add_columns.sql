@@ -1,0 +1,1 @@
+alter table employees add column id serial primary key;

@@ -1,5 +1,6 @@
 package no.kristiania;
 
+import no.kristiania.database.Employee;
 import no.kristiania.database.EmployeeDao;
 import org.flywaydb.core.Flyway;
 import org.h2.jdbcx.JdbcDataSource;
@@ -59,8 +60,7 @@ public class HttpServerTest {
     @Test
     void shouldReturnFileFromDesk() throws IOException {
         HttpServer server = new HttpServer(10005, dataSource);
-        File contentRoot = new File("target/");
-        server.setContentRoot(contentRoot);
+        File contentRoot = new File("target/test-classes");
 
         String fileContent = "Hello World" + new Date();
         Files.writeString(new File(contentRoot, "test.txt").toPath(), fileContent);
@@ -73,8 +73,7 @@ public class HttpServerTest {
     @Test
     void shouldReturnCorrectContentType() throws IOException {
         HttpServer server = new HttpServer(10006, dataSource);
-        File contentRoot = new File("target/");
-        server.setContentRoot(contentRoot);
+        File contentRoot = new File("target/test-classes");
 
         Files.writeString(new File(contentRoot, "index.html").toPath(), "<h2>Hello World</h2>");
 
@@ -85,8 +84,7 @@ public class HttpServerTest {
     @Test
     void shouldReturn404IfFileNotFound() throws IOException {
         HttpServer server = new HttpServer(10007, dataSource);
-        File contentRoot = new File("target/");
-        server.setContentRoot(contentRoot);
+        File contentRoot = new File("target/test-classes");
 
         HttpClient client = new HttpClient("/notFound.txt", "localhost", 10007);
         assertEquals(404, client.getStatusCode());
@@ -104,7 +102,9 @@ public class HttpServerTest {
     void shouldReturnExistingWorker() throws IOException, SQLException {
         HttpServer server = new HttpServer(10009, dataSource);
         EmployeeDao employeeDao = new EmployeeDao(dataSource);
-        employeeDao.insert("elise");
+        Employee employee = new Employee();
+        employee.setName("elise");
+        employeeDao.insert(employee);
         HttpClient client = new HttpClient("/api/workers", "localhost", 10009);
         assertThat(client.getResponseBody()).contains("<li>elise</li>");
     }

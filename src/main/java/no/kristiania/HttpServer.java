@@ -1,21 +1,25 @@
 package no.kristiania;
 
+import no.kristiania.database.Employee;
 import no.kristiania.database.EmployeeDao;
+import org.flywaydb.core.Flyway;
 import org.postgresql.ds.PGSimpleDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 public class HttpServer {
 
-    private File contentRoot;
+    private static final Logger logger = LoggerFactory.getLogger(HttpServer.class);
+
     private EmployeeDao employeeDao;
 
     public HttpServer(int port, DataSource dataSource) throws IOException {
@@ -25,9 +29,9 @@ public class HttpServer {
 
         new Thread(() -> {
             while (true) {
-                try {
-                    Socket clientSocket = serverSocket.accept();
-                    handleRequest(clientSocket);
+                    try (Socket clientSocket = serverSocket.accept()) {
+
+                        handleRequest(clientSocket);
                 } catch (IOException | SQLException e) {
                     e.printStackTrace();
                 }
@@ -52,11 +56,13 @@ public class HttpServer {
         if(requestMethod.equals("POST")){
             QueryString requestParameter = new QueryString(request.getBody());
 
-            employeeDao.insert(requestParameter.getParameter("full_name"));
+            Employee employee = new Employee();
+            employee.setName(requestParameter.getParameter("full_name"));
+            employeeDao.insert(employee);
             String body = "Okay";
             String response = "HTTP/1.1 200 OK\r\n" +
-                    "Content-Length: " + body.length() + "\r\n" +
                     "Connection: close\r\n" +
+                    "Content-Length: " + body.length() + "\r\n" +
                     "\r\n" +
                     body;
 
@@ -68,38 +74,43 @@ public class HttpServer {
             } else if (requestPath.equals("/api/workers")) {
                 handleGetWorkers(clientSocket);
             } else {
-                File file = new File(contentRoot, requestPath);
-                if (!file.exists()) {
-                    String body = file + " does not exist";
-                    String response = "HTTP/1.1 404 Not found\r\n" +
-                            "Content-Length: " + body.length() + "\r\n" +
-                            "Connection: close\r\n" +
-                            "\r\n" +
-                            body;
-
-                    clientSocket.getOutputStream().write(response.getBytes());
-                    return;
-                }
-                String statusCode = "200";
-                String contentType = "text/plain";
-                if (file.getName().endsWith(".html")) {
-                    contentType = "text/html";
-                }
-
-                String response = "HTTP/1.1 " + statusCode + " OK\r\n" +
-                        "Content-Length: " + file.length() + "\r\n" +
-                        "Connection: close\r\n" +
-                        "Content-Type: " + contentType +
-                        "\r\n" + "\r\n";
-
-                clientSocket.getOutputStream().write(response.getBytes());
-
-
-                new FileInputStream(file).transferTo(clientSocket.getOutputStream());
+                handleFileRequest(clientSocket, requestPath);
             }
 
         }
 
+    }
+
+    private void handleFileRequest(Socket clientSocket, String requestPath) throws IOException {
+
+        try (InputStream inputStream = getClass().getResourceAsStream(requestPath)) {
+            if(inputStream == null){
+                String body = requestPath + " does not exist";
+                String response = "HTTP/1.1 404 Not found\r\n" +
+                        "Content-Length: " + body.length() + "\r\n" +
+                        "Connection: close\r\n" +
+                        "\r\n" +
+                        body;
+
+                clientSocket.getOutputStream().write(response.getBytes());
+                return;
+            }
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            inputStream.transferTo(buffer);
+
+            String contentType = "text/plain";
+            if (requestPath.endsWith(".html")) {
+                contentType = "text/html";
+            }
+            String response = "HTTP/1.1 200 OK\r\n" +
+                    "Content-Length: " + buffer.toByteArray().length + "\r\n" +
+                    "Connection: close\r\n" +
+                    "Content-Type: " + contentType +
+                    "\r\n" + "\r\n";
+
+            clientSocket.getOutputStream().write(response.getBytes());
+            clientSocket.getOutputStream().write(buffer.toByteArray());
+        }
     }
 
     private void handleGetWorkers(Socket clientSocket) throws IOException, SQLException {
@@ -145,19 +156,23 @@ public class HttpServer {
 
 
     public static void main (String[]args) throws IOException {
-
-        PGSimpleDataSource dataSource = new PGSimpleDataSource();
-        dataSource.setUrl("jdbc:postgresql://localhost:5432/kristianiasemployees");
-        dataSource.setUser("kristianiasemployeesuser");
-        dataSource.setPassword("hemmelig");
-
-            HttpServer server = new HttpServer(8080, dataSource);
-            server.setContentRoot(new File("src/main/resources"));
+        Properties properties = new Properties();
+        try (FileReader fileReader = new FileReader("pgr203.properties")) {
+            properties.load(fileReader);
         }
 
-    public void setContentRoot(File contentRoot) {
-        this.contentRoot = contentRoot;
-    }
+// OBS! Se video ekstraforelesning, 50:25.
+
+        PGSimpleDataSource dataSource = new PGSimpleDataSource();
+        dataSource.setUrl(properties.getProperty("dataSource.url"));
+        dataSource.setUser(properties.getProperty("dataSource.username"));
+        dataSource.setPassword(properties.getProperty("dataSource.password"));
+        logger.info("Using database {}", dataSource.getUrl());
+        Flyway.configure().dataSource(dataSource).load().migrate();
+
+            HttpServer server = new HttpServer(8080, dataSource);
+            logger.info("Started on http://localhost:{}/index.html", 8080);
+        }
 
     public List<String> getWorkerNames() throws SQLException {
         return employeeDao.list();
