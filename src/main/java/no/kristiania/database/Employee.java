@@ -2,31 +2,32 @@ package no.kristiania.database;
 
 public class Employee {
 
-    private String name;
-    private Double price;
+    private String email;
+    private String firstName;
+    private String lastName;
     private Long id;
 
-    public String getName() {
-        return name;
+    public String getEmail(){return email;}
+
+    public void setEmail(String email){
+        this.email = email;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public String getFirstName(){return firstName;}
+
+    public void setFirstName(String firstName){
+        this.firstName = firstName;
     }
 
-    public Long getId() {
-        return id;
+    public String getLastName(){return lastName;}
+
+    public void setLastName(String lastName){
+        this.lastName = lastName;
     }
 
-    public void setId(Long id) {
+    public Long getId(){return id;}
+
+    public void setId(Long id){
         this.id = id;
-    }
-
-    public Double getPrice() {
-        return price;
-    }
-
-    public void setPrice(Double price) {
-        this.price = price;
     }
 }

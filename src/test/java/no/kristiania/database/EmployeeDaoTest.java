@@ -28,7 +28,9 @@ class EmployeeDaoTest {
         Employee employee2 = exampleEmployee();
         employeeDao.insert(employee1);
         employeeDao.insert(employee2);
-        assertThat(employeeDao.list()).contains(employee1.getName(), employee2.getName());
+        assertThat(employeeDao.list())
+                .extracting(Employee::getFirstName)
+                .contains(employee1.getFirstName(), employee2.getFirstName());
     }
 
     @Test
@@ -45,12 +47,27 @@ class EmployeeDaoTest {
 
     private Employee exampleEmployee() {
         Employee employee = new Employee();
-        employee.setName(exampleEmployeeName());
+        employee.setEmail(exampleEmail());
+        employee.setFirstName(exampleFirstName());
+        employee.setLastName(exampleLastName());
         return employee;
     }
 
-    private String exampleEmployeeName() {
+    private String exampleFirstName() {
         String[] options = {"Elise", "Amina", "Trond", "Sarah"};
+        Random random = new Random();
+        return options[random.nextInt(options.length)];
+    }
+
+    private String exampleLastName() {
+        String[] options = {"Berntssen", "Olsen", "Trolsen", "Elf"};
+        Random random = new Random();
+        return options[random.nextInt(options.length)];
+    }
+
+    private String exampleEmail() {
+        String[] options = {"hei@hå", "ko@ko", "tro@lo", "hade@hei"};
+        Random random = new Random();
         return options[random.nextInt(options.length)];
     }
 }

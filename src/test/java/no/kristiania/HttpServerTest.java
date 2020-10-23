@@ -93,9 +93,11 @@ public class HttpServerTest {
     @Test
     void shouldPostNewWorker() throws IOException, SQLException {
         HttpServer server = new HttpServer(10008, dataSource);
-        HttpClient client = new HttpClient("/api/newWorker", "localhost", 10008, "POST", "full_name=amina&email_address=amina@gmail");
+        HttpClient client = new HttpClient("/api/newWorker", "localhost", 10008, "POST", "first_name=amina&email=amina@gmail");
         assertEquals(200, client.getStatusCode());
-        assertThat(server.getWorkerNames()).contains("amina");
+        assertThat(server.getWorkerNames())
+                .extracting(Employee::getFirstName)
+                .contains("amina");
     }
 
     @Test
@@ -103,9 +105,11 @@ public class HttpServerTest {
         HttpServer server = new HttpServer(10009, dataSource);
         EmployeeDao employeeDao = new EmployeeDao(dataSource);
         Employee employee = new Employee();
-        employee.setName("elise");
+        employee.setFirstName("elise");
+        employee.setLastName("Easter");
+        employee.setEmail("elise@mail");
         employeeDao.insert(employee);
         HttpClient client = new HttpClient("/api/workers", "localhost", 10009);
-        assertThat(client.getResponseBody()).contains("<li>elise</li>");
+        assertThat(client.getResponseBody()).contains("<li>elise Easter elise@mail</li>");
     }
 }

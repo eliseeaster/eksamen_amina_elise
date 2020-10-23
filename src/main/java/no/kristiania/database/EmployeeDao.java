@@ -1,26 +1,27 @@
 package no.kristiania.database;
-
 import org.postgresql.ds.PGSimpleDataSource;
-
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-
 public class EmployeeDao {
 
     private final DataSource dataSource;
 
-    public EmployeeDao(DataSource dataSource) { this.dataSource = dataSource; }
+    public EmployeeDao(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     public void insert(Employee employee) throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO employees (employee_name) values (?)",
+                    "insert into employees (first_name, last_name, email) values (?, ?, ?)",
                     Statement.RETURN_GENERATED_KEYS
-                    )) {
-                statement.setString(1, employee.getName());
+            )) {
+                statement.setString(1, employee.getFirstName());
+                statement.setString(2, employee.getLastName());
+                statement.setString(3, employee.getEmail());
                 statement.executeUpdate();
 
                 try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
@@ -33,15 +34,11 @@ public class EmployeeDao {
 
     public Employee retrieve(Long id) throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
-            try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM employees WHERE Id = ?")) {
+            try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM employees WHERE id = ?")) {
                 statement.setLong(1, id);
                 try (ResultSet rs = statement.executeQuery()) {
-                    List<String> employees = new ArrayList<>();
                     if (rs.next()) {
-                        Employee employee = new Employee();
-                        employee.setId(rs.getLong("id"));
-                        employee.setName(rs.getString("employee_name"));
-                        return employee;
+                        return mapRowToWorkers(rs);
                     } else {
                         return null;
                     }
@@ -50,13 +47,27 @@ public class EmployeeDao {
         }
     }
 
-    public List<String> list() throws SQLException {
+    private Employee mapRowToWorkers(ResultSet rs) throws SQLException {
+        Employee employee = new Employee();
+        employee.setId(rs.getLong("id"));
+        employee.setFirstName(rs.getString("first_Name"));
+        employee.setLastName(rs.getString("last_Name"));
+        employee.setEmail(rs.getString("email"));
+        return employee;
+    }
+
+    public List<Employee> list() throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
-            try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM employees")) {
+            try (PreparedStatement statement = connection.prepareStatement(" SELECT * FROM employees")) {
                 try (ResultSet rs = statement.executeQuery()) {
-                    List<String> employees = new ArrayList<>();
+                    List<Employee> employees = new ArrayList<>();
                     while (rs.next()) {
-                        employees.add(rs.getString("employee_name"));
+                        Employee employee = new Employee();
+                        employees.add(mapRowToWorkers(rs));
+                        rs.getString("first_name");
+                        rs.getString("last_name");
+                        rs.getString("email");
+                        employee.setId(rs.getLong("id"));
                     }
                     return employees;
                 }
@@ -64,22 +75,4 @@ public class EmployeeDao {
         }
     }
 
-    public static void main(String[] args) throws SQLException {
-        PGSimpleDataSource dataSource = new PGSimpleDataSource();
-        dataSource.setUrl("jdbc:postgresql://localhost:5432/kristianiasemployees");
-        dataSource.setUser("kristianiasemployeesuser");
-        dataSource.setPassword("hemmelig");
-
-        EmployeeDao employeeDao = new EmployeeDao(dataSource);
-
-
-        System.out.println("What's the name of the employee?");
-        Scanner scanner = new Scanner(System.in);
-        Employee employee = new Employee();
-        employee.setName(scanner.nextLine());
-
-        employeeDao.insert(employee);
-        System.out.println(employeeDao.list());
-
-    }
 }

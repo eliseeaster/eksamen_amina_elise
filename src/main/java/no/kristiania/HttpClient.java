@@ -6,11 +6,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HttpClient {
-
     private int statusCode;
     private Map<String, String> headers = new HashMap<>();
     private String responseBody;
-
 
     public HttpClient(final String requestTarget, final String hostName, int port) throws IOException {
         this(requestTarget, hostName, port, "GET", null);
