@@ -1,0 +1,34 @@
+@startuml
+
+entity Employees {
+    id
+    --
+    * name
+    category_id
+}
+
+entity EmployeeCategories {
+    id
+    --
+    name
+}
+
+entity OrdersToDo {
+    id
+    --
+    customer_name_todo
+    customer_email_todo
+    order_date_todo
+}
+
+entity OrderLinesToDo {
+    employee_id
+    order_id
+    --
+    quantity_todo
+ }
+
+EmployeeCategories ||--o{ Employees
+Employees ||-o{ OrderLines
+OrderLines }o-|| Orders
+@enduml
