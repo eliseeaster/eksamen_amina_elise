@@ -29,6 +29,6 @@ entity OrderLinesToDo {
  }
 
 EmployeeCategories ||--o{ Employees
-Employees ||-o{ OrderLines
-OrderLines }o-|| Orders
+Employees ||-o{ OrderLinesToDo
+OrderLinesToDo }o-|| OrdersToDo
 @enduml

@@ -93,11 +93,14 @@ public class HttpServerTest {
     @Test
     void shouldPostNewWorker() throws IOException, SQLException {
         HttpServer server = new HttpServer(10008, dataSource);
-        HttpClient client = new HttpClient("/api/newWorker", "localhost", 10008, "POST", "first_name=amina&email=amina@gmail");
+        String requestBody = "first_name=amina&email=amina@gmail";
+        HttpClient client = new HttpClient("/api/newWorker", "localhost", 10008, "POST", requestBody);
         assertEquals(200, client.getStatusCode());
         assertThat(server.getWorkerNames())
-                .extracting(Employee::getFirstName)
-                .contains("amina");
+                .filteredOn(employee -> employee.getFirstName().equals("amina"))
+                .isNotEmpty()
+                .satisfies(employee -> assertThat(employee.get(0).getEmail()).isEqualTo("amina@gmail"));
+
     }
 
     @Test
