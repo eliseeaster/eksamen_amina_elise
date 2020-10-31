@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Employees</title>
+</head>
+<body>
+
+<div>Current employees:</div>
+<div id="workers"></div>
+
+<script>
+    fetch("/api/workers")
+        .then(function(response) {
+            return response.text();
+        }).then(function(text) {
+        document.getElementById("workers").innerHTML = text;
+    });
+</script>
+</body>
+</html>

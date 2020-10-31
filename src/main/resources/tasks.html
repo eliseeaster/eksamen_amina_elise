@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<div>Current tasks:</div>
+<div id="tasks"></div>
+
+<script>
+    fetch("/api/tasks")
+        .then(function(response) {
+            return response.text();
+        }).then(function(text) {
+        document.getElementById("tasks").innerHTML = text;
+    });
+</script>
+
+</body>
+</html>

@@ -6,21 +6,27 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>Project view</h1>
 
 <div id="projectMembers"></div>
 
 <div>
-    <a href="newWorker.html">Add new project member</a>
-    <div id="workers">Current workers:</div>
+
+    <h1>Welcome to Kristianias employee page</h1>
+
+    <h2>Menu</h2>
+
+    <ul>
+        <li><a href="employees.html">Current employees</a></li>
+        <li><a href="newWorker.html">Add new employee</a></li>
+        <li><a href="tasks.html">Current tasks</a></li>
+        <li><a href="newTask.html">Add new task</a></li>
+
+    </ul>
+
 </div>
+
 </body>
 <script>
-    fetch("/api/workers")
-        .then(function(response) {
-            return response.text();
-        }).then(function(text) {
-        document.getElementById("workers").innerHTML = text;
-    });
+
 </script>
 </html>
