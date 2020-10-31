@@ -96,7 +96,7 @@ public class HttpServerTest {
         String requestBody = "first_name=amina&email=amina@gmail";
         HttpClient client = new HttpClient("/api/newWorker", "localhost", 10008, "POST", requestBody);
         assertEquals(200, client.getStatusCode());
-        assertThat(server.getWorkerNames())
+        assertThat(server.getWorker())
                 .filteredOn(employee -> employee.getFirstName().equals("amina"))
                 .isNotEmpty()
                 .satisfies(employee -> assertThat(employee.get(0).getEmail()).isEqualTo("amina@gmail"));

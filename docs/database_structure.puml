@@ -1,34 +1,30 @@
 @startuml
 
 entity Employees {
-    id
+    employee id
     --
     * name
     category_id
 }
 
-entity EmployeeCategories {
-    id
-    --
-    name
-}
-
-entity OrdersToDo {
-    id
+entity Employees_task {
+    task id
+    employee id
     --
     customer_name_todo
     customer_email_todo
     order_date_todo
 }
 
-entity OrderLinesToDo {
-    employee_id
-    order_id
+entity Task {
+    Task ID
     --
-    quantity_todo
+    Name
+    Status
  }
 
-EmployeeCategories ||--o{ Employees
-Employees ||-o{ OrderLinesToDo
-OrderLinesToDo }o-|| OrdersToDo
+Employees ||--o{ Employees_task
+Task ||--|{ Employees_task
+
+
 @enduml

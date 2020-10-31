@@ -181,7 +181,7 @@ public class HttpServer {
             logger.info("Started on http://localhost:{}/index.html", 8080);
         }
 
-    public List<Employee> getWorkerNames() throws SQLException {
+    public List<Employee> getWorker() throws SQLException {
         return employeeDao.list();
     }
 }
