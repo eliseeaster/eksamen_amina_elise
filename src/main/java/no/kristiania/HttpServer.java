@@ -54,12 +54,10 @@ public class HttpServer {
         String requestPath = (questionPos != -1) ? requestTarget.substring(0, questionPos) : requestTarget;
 
         if(requestMethod.equals("POST")){
-            QueryString requestedParameter = new QueryString(request.getBody());
+            QueryString requestParameter = new QueryString(request.getBody());
 
             Employee employee = new Employee();
-            employee.setEmail(requestedParameter.getParameter("email"));
-            employee.setFirstName(requestedParameter.getParameter("first_name"));
-            employee.setLastName(requestedParameter.getParameter("last_name"));
+            employee.setName(requestParameter.getParameter("full_name"));
             employeeDao.insert(employee);
             String body = "Okay";
             String response = "HTTP/1.1 200 OK\r\n" +
@@ -104,15 +102,11 @@ public class HttpServer {
             if (requestPath.endsWith(".html")) {
                 contentType = "text/html";
             }
-            if(requestPath.endsWith(".css")){
-                contentType = "text/css";
-            }
-
             String response = "HTTP/1.1 200 OK\r\n" +
                     "Content-Length: " + buffer.toByteArray().length + "\r\n" +
-                    "Content-Type: " + contentType + "\r\n" +
                     "Connection: close\r\n" +
-                    "\r\n";
+                    "Content-Type: " + contentType +
+                    "\r\n" + "\r\n";
 
             clientSocket.getOutputStream().write(response.getBytes());
             clientSocket.getOutputStream().write(buffer.toByteArray());
@@ -122,9 +116,8 @@ public class HttpServer {
     private void handleGetWorkers(Socket clientSocket) throws IOException, SQLException {
         String body = "<ul>";
         for (Employee employee : employeeDao.list()) {
-            body += "<li>" + employee.getFirstName() + " " + employee.getLastName() + " " + employee.getEmail() + "</li>";
+            body += "<li>" + employee.getName() + "</li>";
         }
-
         body += "</ul>";
         String response = "HTTP/1.1 200 OK\r\n" +
                 "Content-Length: " + body.length() + "\r\n" +
@@ -166,9 +159,9 @@ public class HttpServer {
         Properties properties = new Properties();
         try (FileReader fileReader = new FileReader("pgr203.properties")) {
             properties.load(fileReader);
-        }catch (Exception e){
-            System.out.println(e);
         }
+
+// OBS! Se video ekstraforelesning, 50:25.
 
         PGSimpleDataSource dataSource = new PGSimpleDataSource();
         dataSource.setUrl(properties.getProperty("dataSource.url"));
@@ -185,3 +178,38 @@ public class HttpServer {
         return employeeDao.list();
     }
 }
+
+
+/* KODE FRA SLIDES
+        new Thread(() -> {
+            try{
+                Socket socket = serverSocket.accept();
+                handleRequest(socket);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    public static void main(String[] args) throws IOException {
+        new httpServer(8080);
+
+    }
+
+    private static void handleRequest(Socket socket) throws IOException {
+        String responseLine = httpClient.readLine(socket);
+        System.out.println(responseLine);
+        String response = "HTTP/1.1 200 OK\r\n" +
+                "Content-Type: text/html; charset=utf-8\r\n" +
+                "Content-Length: 11\r\n" +
+                "\r\n" +
+                "Hello world";
+
+        socket.getOutputStream().write(response.getBytes());
+    }
+
+    }
+
+    public httpServer(int port) throws IOException {
+
+}*/
