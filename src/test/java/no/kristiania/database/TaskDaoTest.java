@@ -38,7 +38,7 @@ public class TaskDaoTest {
     }
 
     private EmployeeTask exampleTask() {
-    return null;
+    return new EmployeeTask();
     }
 
 }

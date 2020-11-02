@@ -14,7 +14,7 @@ public class EmployeeTaskDao {
 
     public List<EmployeeTask> list() throws SQLException {
             try (Connection connection = dataSource.getConnection()) {
-                try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM employees")) {
+                try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM employee_tasks")) {
                     try (ResultSet rs = statement.executeQuery()) {
                         List<EmployeeTask> employees = new ArrayList<>();
                         while (rs.next()) {
@@ -26,15 +26,17 @@ public class EmployeeTaskDao {
             }
         }
 
-    private EmployeeTask mapRowToTask(ResultSet rs) {
-        return new EmployeeTask();
+    private EmployeeTask mapRowToTask(ResultSet rs) throws SQLException {
+        EmployeeTask task = new EmployeeTask();
+        task.setName(rs.getString("name"));
+        return task;
     }
 
 
     public void insert(EmployeeTask task) throws SQLException {
         try (Connection connection = dataSource.getConnection()) {
             try (PreparedStatement statement = connection.prepareStatement(
-                    "INSERT INTO employees (employee_name) values (?)",
+                    "INSERT INTO employee_tasks (name) values (?)",
                     Statement.RETURN_GENERATED_KEYS
             )) {
                 statement.setString(1, task.getName());
