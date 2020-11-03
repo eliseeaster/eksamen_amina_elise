@@ -49,4 +49,9 @@ public class EmployeeTaskDao {
             }
         }
     }
+
+    public EmployeeTask retreive(Long id) throws SQLException {
+
+        return null;
+    }
 }
